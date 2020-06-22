@@ -87,6 +87,7 @@ def make_parser() -> argparse.ArgumentParser:
 
 def get_reddit(args: argparse.Namespace) -> praw.Reddit:
     auth = read_user_auth(args.config)
+    auth['user_agent'] = 'Youtube anti-youtube spam by, by u/Thridegree'
     return praw.Reddit(**auth)  # type: ignore
 
 
@@ -164,10 +165,7 @@ def main() -> None:
     r = get_reddit(args)
     i = 0
     wiki_config = get_wiki_page_config(r, args.wiki_config_name)
-    log_config(wiki_config)
-    grouped_subs = r.subreddit('+'.join(s for s in wiki_config.subreddits))
-
-    def should_skip(item: PRAW_ITEMS) -> bool:
+    log_config(wiki_config) grouped_subs = r.subreddit('+'.join(s for s in wiki_config.subreddits)) def should_skip(item: PRAW_ITEMS) -> bool:
         if item.approved_by is not None:  # type: ignore
             # ignore things that have been explicitly approved
             return True

@@ -40,7 +40,7 @@ def get_content(item: PRAW_ITEMS) -> str:
             return item.url  # type: ignore
     if isinstance(item, praw.models.Comment):
         return item.body  # type: ignore
-    raise TypeError("Can only get content for submissions of comments")
+    raise TypeError("Can only get content for submissions or comments")
 
 
 def get_youtube_ratio(redditor: praw.models.Redditor,  # type: ignore

@@ -78,6 +78,10 @@ def make_parser() -> argparse.ArgumentParser:
         type=Path,
         default=os.path.expanduser('~/.redditrc'),
         help='path for reddit user credentials')
+    parser.add_argument(
+        '--wiki-config-name',
+        default='youtube_spam_bot_config',
+        help='Name of the wiki page for runtime config')
     return parser
 
 
@@ -86,12 +90,34 @@ def get_reddit(args: argparse.Namespace) -> praw.Reddit:
     return praw.Reddit(**auth)  # type: ignore
 
 
-def get_wiki_page_config(r: praw.Reddit) -> BotConfig:
+def create_config_wiki(sub: praw.models.Subreddit, page_name: str) -> None:
+    sub.wiki.create(
+        page_name,
+        content=dedent("""\
+                [youtube_spam_bot]
+                subreddits=
+                target_ratio=0.33
+                lookback=50
+                user_whitelist="""
+                       )
+    )
+
+
+def get_wiki_page_config(r: praw.Reddit, page_name: str) -> BotConfig:
     username = str(r.user.me())  # type: ignore
     config_sub = r.subreddit(username)
-    sub_page = config_sub.wiki['youtube_spam_bot_config']  # type: ignore
+    sub_page = config_sub.wiki[page_name]  # type: ignore
     parser = ConfigParser()
-    parser.read_string(sub_page.content_md)
+
+    try:
+        parser.read_string(sub_page.content_md)
+    except prawcore.exceptions.NotFound:
+        wiki_url = f'{sub_page.subreddit}/wiki/{page_name}'
+        log.error((
+            f"Config wiki page ({wiki_url}) not found. "
+            "Creating a template then exiting."))
+        create_config_wiki(config_sub, page_name)
+        exit(1)
     subreddits = parser.get('youtube_spam_bot', 'subreddits').split('\n')
     # filter out potentially empty start entry
     subreddits = [s.strip() for s in subreddits if s]
@@ -137,7 +163,7 @@ def main() -> None:
     args = parser.parse_args()
     r = get_reddit(args)
     i = 0
-    wiki_config = get_wiki_page_config(r)
+    wiki_config = get_wiki_page_config(r, args.wiki_config_name)
     log_config(wiki_config)
     grouped_subs = r.subreddit('+'.join(s for s in wiki_config.subreddits))
 

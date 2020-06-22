@@ -30,13 +30,12 @@ r/YouTubSpamBot/wiki/youtube\_spam\_bot\_config).
 
 If that page is not created at runtime, it will be created with some default
 values, and the bot will exit. The config looks like this:
-
 ```ini
 [youtube_spam_bot]
 subreddits=
     a_subreddit
     another_subreddit
-    someone_else
+    a_third_subbie
 target_ratio=0.33
 lookback=50
 user_whitelist=

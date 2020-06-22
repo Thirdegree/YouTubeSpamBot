@@ -159,6 +159,21 @@ def log_config(config: BotConfig) -> None:
     log.info("with a target ratio %s", config.target_ratio)
     log.info("Whitelisted users: %s", config.user_whitelist)
 
+def should_skip(item: PRAW_ITEMS, user_whitelist: List[str]) -> bool:
+    if item.approved_by is not None:  # type: ignore
+        # ignore things that have been explicitly approved
+        return True
+    if item.removal_reason is not None:  # type: ignore
+        # ignore things that have been explicitly removed
+        return True
+    if item.author is None:  # type: ignore
+        return True
+    if item.author.name in user_whitelist:  # type: ignore
+        return True
+    if not is_youtube(get_content(c)):
+        # ignore things that don't have youtube links
+        return True
+    return False
 
 def main() -> None:
     parser = make_parser()
@@ -169,21 +184,6 @@ def main() -> None:
     log_config(wiki_config)
     grouped_subs = r.subreddit('+'.join(s for s in wiki_config.subreddits))
 
-    def should_skip(item: PRAW_ITEMS) -> bool:
-        if item.approved_by is not None:  # type: ignore
-            # ignore things that have been explicitly approved
-            return True
-        if item.removal_reason is not None:  # type: ignore
-            # ignore things that have been explicitly removed
-            return True
-        if item.author is None:  # type: ignore
-            return True
-        if item.author.name in wiki_config.user_whitelist:  # type: ignore
-            return True
-        if not is_youtube(get_content(c)):
-            # ignore things that don't have youtube links
-            return True
-        return False
     streams = (grouped_subs.stream.comments(pause_after=-1),
                grouped_subs.stream.submissions(pause_after=-1))
 
@@ -193,7 +193,7 @@ def main() -> None:
                 if i % 500 == 0:
                     log.info("Have seen %s items", i)
                 i += 1
-                if should_skip(c):
+                if should_skip(c, wiki_config.user_whitelist):
                     continue
                 ratio, counted = get_youtube_ratio(
                     c.author,  # type: ignore

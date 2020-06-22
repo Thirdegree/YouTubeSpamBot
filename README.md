@@ -26,7 +26,7 @@ command-line argument, defaulting to `$HOME/.redditrc`.
 ## Runtime configuration
 This runtime parameters are set in a subreddit by the same name as a bot (so
 u/YouTubSpamBot would be configured in
-r/YouTubSpamBotiwiki/youtube\_spam\_bot\_config).
+r/YouTubSpamBot/wiki/youtube\_spam\_bot\_config).
 
 If that page is not created at runtime, it will be created with some default
 values, and the bot will exit. The config looks like this:

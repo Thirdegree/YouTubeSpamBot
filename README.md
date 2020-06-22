@@ -45,3 +45,12 @@ user_whitelist=
 
 The name of this page can be specified with the `--wiki-config-name`
 command-line argument, defaulting to 'youtube\_spam\_bot\_config'
+
+# Running
+
+There is a single command-line entry point: `youtube_spam_bot`. This will log
+to stderr.
+
+```bash
+$ youtube_spam_bot --config ~/.redditrc --wiki-config-name youtube_spam_bot_config
+```

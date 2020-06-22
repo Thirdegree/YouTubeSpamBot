@@ -82,12 +82,13 @@ def make_parser() -> argparse.ArgumentParser:
         '--wiki-config-name',
         default='youtube_spam_bot_config',
         help='Name of the wiki page for runtime config')
+    parser.add_argument('--dry-run', action='store_true',
+                        help="don't actually remove the things")
     return parser
 
 
 def get_reddit(args: argparse.Namespace) -> praw.Reddit:
     auth = read_user_auth(args.config)
-    auth['user_agent'] = 'Youtube anti-youtube spam by, by u/Thridegree'
     return praw.Reddit(**auth)  # type: ignore
 
 
@@ -165,7 +166,10 @@ def main() -> None:
     r = get_reddit(args)
     i = 0
     wiki_config = get_wiki_page_config(r, args.wiki_config_name)
-    log_config(wiki_config) grouped_subs = r.subreddit('+'.join(s for s in wiki_config.subreddits)) def should_skip(item: PRAW_ITEMS) -> bool:
+    log_config(wiki_config)
+    grouped_subs = r.subreddit('+'.join(s for s in wiki_config.subreddits))
+
+    def should_skip(item: PRAW_ITEMS) -> bool:
         if item.approved_by is not None:  # type: ignore
             # ignore things that have been explicitly approved
             return True
@@ -215,8 +219,9 @@ def main() -> None:
 
                     Please [contact the moderators](https://www.reddit.com/message/compose?to=%2Fr%2F{c.subreddit.display_name}&subject=&message={c.permalink}) if you have questions.
                     """)
-                    c.mod.remove()
-                    c.mod.send_removal_message(removal_reason)
+                    if not args.dry_run:
+                        c.mod.remove()
+                        c.mod.send_removal_message(removal_reason)
                     log_removal(c, ratio, counted, wiki_config)
         except prawcore.exceptions.ResponseException:
             log.exception("Error!")
